@@ -1,0 +1,11 @@
+/.DS_Store
+/.vscode
+/Azure ML
+/Classwork
+/HW
+/HW2
+
+*.csv
+*.parquet
+
+*.json

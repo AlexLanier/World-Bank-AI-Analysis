@@ -1,0 +1,55 @@
+## 50+ Common World Bank Indicators with ML/AI Applications
+ 
+| No. | Indicator Name | Code | ML/AI Use Case |
+|-----|----------------|------|----------------|
+| 1 | GDP (current US$) | NY.GDP.MKTP.CD | Forecast GDP growth using regression or LSTM. |
+| 2 | GDP per capita | NY.GDP.PCAP.CD | Predict income inequality and living standards. |
+| 3 | Inflation rate | FP.CPI.TOTL.ZG | Model inflation trends via time series. |
+| 4 | Unemployment rate | SL.UEM.TOTL.ZS | Predict job loss risk using classification. |
+| 5 | Population, total | SP.POP.TOTL | Predict demographic growth using ARIMA. |
+| 6 | Population growth rate | SP.POP.GROW | Forecast future population. |
+| 7 | Life expectancy | SP.DYN.LE00.IN | Predict lifespan from healthcare data. |
+| 8 | Infant mortality rate | SP.DYN.IMRT.IN | Identify health system risk areas. |
+| 9 | CO₂ emissions | EN.ATM.CO2E.PC | Predict emission reduction impacts. |
+| 10 | Renewable energy use | EG.FEC.RNEW.ZS | Model renewable adoption patterns. |
+| 11 | Power consumption | EG.USE.ELEC.KH.PC | Forecast national energy demand. |
+| 12 | Internet users | IT.NET.USER.ZS | Model digital inclusion. |
+| 13 | Mobile subscriptions | IT.CEL.SETS.P2 | Predict telecom market saturation. |
+| 14 | Access to electricity | EG.ELC.ACCS.ZS | Predict electrification coverage. |
+| 15 | School enrollment (primary) | SE.PRM.ENRR | Model education reach. |
+| 16 | Literacy rate | SE.ADT.LITR.ZS | Predict literacy changes. |
+| 17 | Education expenditure | SE.XPD.TOTL.GD.ZS | Correlate spending to outcomes. |
+| 18 | Health expenditure | SH.XPD.CHEX.GD.ZS | Predict healthcare quality improvements. |
+| 19 | Hospital beds per 1,000 | SH.MED.BEDS.ZS | Forecast health infrastructure needs. |
+| 20 | Physicians per 1,000 | SH.MED.PHYS.ZS | Predict healthcare staff shortages. |
+| 21 | Urban population | SP.URB.TOTL.IN.ZS | Forecast urbanization impact. |
+| 22 | Poverty headcount ratio | SI.POV.DDAY | Predict poverty reduction outcomes. |
+| 23 | Employment in agriculture | SL.AGR.EMPL.ZS | Analyze structural job shifts. |
+| 24 | Employment in industry | SL.IND.EMPL.ZS | Forecast industrial job creation. |
+| 25 | Employment in services | SL.SRV.EMPL.ZS | Predict service sector growth. |
+| 26 | FDI inflows | BX.KLT.DINV.CD.WD | Cluster countries by investment appeal. |
+| 27 | Imports (% of GDP) | NE.IMP.GNFS.ZS | Model trade dependency. |
+| 28 | Exports (% of GDP) | NE.EXP.GNFS.ZS | Predict trade competitiveness. |
+| 29 | Agriculture value added | NV.AGR.TOTL.ZS | Forecast food production output. |
+| 30 | Industry value added | NV.IND.TOTL.ZS | Predict manufacturing growth. |
+| 31 | Services value added | NV.SRV.TOTL.ZS | Model service sector contribution. |
+| 32 | External debt | DT.DOD.DECT.GN.ZS | Predict debt default risk. |
+| 33 | Exchange rate | PA.NUS.FCRF | Forecast currency fluctuations. |
+| 34 | Interest rate | FR.INR.LEND | Model rate prediction using regression. |
+| 35 | Broad money | FM.LBL.BMNY.GD.ZS | Predict liquidity growth. |
+| 36 | Credit to private sector | FS.AST.PRVT.GD.ZS | Model banking risk exposure. |
+| 37 | Current account balance | BN.CAB.XOKA.GD.ZS | Predict economic imbalance. |
+| 38 | Gini index | SI.POV.GINI | Predict income inequality. |
+| 39 | Corruption perception | (external) | Classify governance performance. |
+| 40 | Military expenditure | MS.MIL.XPND.GD.ZS | Predict defense budgeting. |
+| 41 | Access to clean water | SH.H2O.SAFE.ZS | Predict water scarcity. |
+| 42 | Sanitation services | SH.STA.SMSS.ZS | Model sanitation improvements. |
+| 43 | Forest area | AG.LND.FRST.ZS | Predict deforestation trends. |
+| 44 | Agricultural land | AG.LND.AGRI.ZS | Predict land-use change. |
+| 45 | Arable land | AG.LND.ARBL.ZS | Model crop productivity. |
+| 46 | Urban population growth | SP.URB.GROW | Forecast city expansion. |
+| 47 | Rural population | SP.RUR.TOTL.ZS | Predict rural migration. |
+| 48 | Gross savings | NY.GNS.ICTR.ZS | Model savings rates. |
+| 49 | Tax revenue | GC.TAX.TOTL.GD.ZS | Forecast fiscal income. |
+| 50 | Ease of doing business | (WB DB Index) | Rank business environments using ML. |
+| 51 | HDI (Human Development Index) | (UNDP) | Predict human development scores. |
