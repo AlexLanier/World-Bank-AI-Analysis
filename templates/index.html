@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Bank Loan Prediction</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .form-container {
+            padding: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 0.95em;
+        }
+
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result {
+            display: none;
+            margin-top: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 5px solid #667eea;
+        }
+
+        .result.show {
+            display: block;
+        }
+
+        .result h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .prediction {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .probabilities {
+            display: grid;
+            gap: 10px;
+        }
+
+        .prob-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .prob-label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .prob-value {
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 5px solid #c33;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 5px solid #2196f3;
+            padding: 15px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+
+        .info-box p {
+            color: #1976d2;
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌍 World Bank Loan Predictor</h1>
+            <p>Predict loan cancellation and disbursement outcomes</p>
+        </div>
+
+        <div class="form-container">
+            <div class="info-box">
+                <p><strong>📊 About:</strong> This tool predicts the likelihood of loan cancellation based on various financial and economic indicators. Enter the loan details below to get a prediction.</p>
+            </div>
+
+            <form id="predictionForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="loan_type">Loan Type</label>
+                        <select id="loan_type" name="loan_type" required>
+                            {% for loan_type in loan_types %}
+                            <option value="{{ loan_type }}">{{ loan_type }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="region">Region</label>
+                        <select id="region" name="region" required>
+                            {% for region in regions %}
+                            <option value="{{ region }}">{{ region }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="interest_rate">Interest Rate (%)</label>
+                    <input type="number" id="interest_rate" name="interest_rate" step="0.01" min="0" max="100" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="original_principal_amount">Original Principal Amount (USD)</label>
+                    <input type="number" id="original_principal_amount" name="original_principal_amount" step="1000" min="0" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="borrowers_obligation">Borrower's Obligation (USD)</label>
+                    <input type="number" id="borrowers_obligation" name="borrowers_obligation" step="1000" min="0" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="due_to_ibrd">Due to IBRD (USD)</label>
+                    <input type="number" id="due_to_ibrd" name="due_to_ibrd" step="1000" min="0" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="gdp_total">GDP Total (USD)</label>
+                    <input type="number" id="gdp_total" name="gdp_total" step="1000000" min="0" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="gdp_per_capita">GDP Per Capita (USD)</label>
+                    <input type="number" id="gdp_per_capita" name="gdp_per_capita" step="100" min="0" required>
+                </div>
+
+                <button type="submit">🔮 Predict Loan Outcome</button>
+            </form>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Processing your prediction...</p>
+            </div>
+
+            <div class="result" id="result">
+                <h3>Prediction Result</h3>
+                <div class="prediction" id="prediction"></div>
+                <div class="probabilities" id="probabilities"></div>
+            </div>
+
+            <div class="error" id="error" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('predictionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Hide previous results
+            document.getElementById('result').classList.remove('show');
+            document.getElementById('error').style.display = 'none';
+            
+            // Show loading
+            document.getElementById('loading').classList.add('show');
+            
+            // Collect form data
+            const formData = {
+                loan_type: document.getElementById('loan_type').value,
+                region: document.getElementById('region').value,
+                interest_rate: parseFloat(document.getElementById('interest_rate').value),
+                original_principal_amount: parseFloat(document.getElementById('original_principal_amount').value),
+                borrowers_obligation: parseFloat(document.getElementById('borrowers_obligation').value),
+                due_to_ibrd: parseFloat(document.getElementById('due_to_ibrd').value),
+                gdp_total: parseFloat(document.getElementById('gdp_total').value),
+                gdp_per_capita: parseFloat(document.getElementById('gdp_per_capita').value)
+            };
+            
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                // Hide loading
+                document.getElementById('loading').classList.remove('show');
+                
+                if (response.ok) {
+                    // Display results
+                    const emojiMap = {
+                        'Fully Disbursed': '✅',
+                        'Major Cancellation': '⚠️',
+                        'Minor Cancellation': '🔍'
+                    };
+                    
+                    document.getElementById('prediction').textContent = 
+                        `${emojiMap[data.prediction] || '📊'} ${data.prediction}`;
+                    
+                    const probContainer = document.getElementById('probabilities');
+                    probContainer.innerHTML = '';
+                    
+                    Object.entries(data.probabilities).forEach(([label, value]) => {
+                        const probItem = document.createElement('div');
+                        probItem.className = 'prob-item';
+                        probItem.innerHTML = `
+                            <span class="prob-label">${label}</span>
+                            <span class="prob-value">${(value * 100).toFixed(2)}%</span>
+                        `;
+                        probContainer.appendChild(probItem);
+                    });
+                    
+                    document.getElementById('result').classList.add('show');
+                } else {
+                    // Display error
+                    document.getElementById('error').textContent = data.error || 'An error occurred';
+                    document.getElementById('error').style.display = 'block';
+                }
+            } catch (error) {
+                document.getElementById('loading').classList.remove('show');
+                document.getElementById('error').textContent = 'Network error. Please try again.';
+                document.getElementById('error').style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
+
