@@ -43,6 +43,27 @@
         .header p {
             opacity: 0.9;
             font-size: 1.1em;
+            margin-bottom: 15px;
+        }
+
+        .header .nav-links {
+            margin-top: 15px;
+        }
+
+        .header .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            margin: 0 5px;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .header .nav-links a:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
         }
 
         .main-content {
@@ -267,6 +288,9 @@
         <div class="header">
             <h1>🌍 World Bank Loan Predictor</h1>
             <p>Predict loan cancellation and disbursement outcomes with AI</p>
+            <div class="nav-links">
+                <a href="/analytics">📊 View Analytics</a>
+            </div>
         </div>
 
         <div class="main-content">
