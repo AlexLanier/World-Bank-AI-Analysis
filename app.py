@@ -156,5 +156,5 @@ if __name__ == '__main__':
     else:
         print("⚠️  Running without pre-trained model")
     
-    app.run(debug=True, host='0.0.0.0', port=8080)
+    app.run(debug=True, host='0.0.0.0', port=9000)
 
