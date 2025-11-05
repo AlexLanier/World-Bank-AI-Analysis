@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>World Bank Loan Prediction</title>
+    <title>World Bank Loan Predictor</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -16,12 +18,56 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px;
+        }
+
+        /* Navigation Bar */
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .nav-logo {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-links a {
+            color: #333;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
         }
 
         .container {
             max-width: 1200px;
-            margin: 0 auto;
+            margin: 20px auto;
             background: white;
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
@@ -43,27 +89,6 @@
         .header p {
             opacity: 0.9;
             font-size: 1.1em;
-            margin-bottom: 15px;
-        }
-
-        .header .nav-links {
-            margin-top: 15px;
-        }
-
-        .header .nav-links a {
-            color: white;
-            text-decoration: none;
-            padding: 8px 16px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            margin: 0 5px;
-            display: inline-block;
-            transition: all 0.3s ease;
-        }
-
-        .header .nav-links a:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
         }
 
         .main-content {
@@ -83,56 +108,155 @@
 
         .form-group {
             margin-bottom: 25px;
+            position: relative;
         }
 
         label {
-            display: block;
+            display: flex;
+            align-items: center;
+            gap: 8px;
             margin-bottom: 8px;
             font-weight: 600;
             color: #333;
             font-size: 0.95em;
         }
 
-        .range-hint {
-            font-size: 0.85em;
-            color: #666;
-            margin-top: 3px;
+        .tooltip-icon {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+            color: #667eea;
+            font-size: 0.9em;
         }
 
-        input[type="number"],
-        select {
+        .tooltip-icon:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .tooltip-text {
+            visibility: hidden;
+            width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: left;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -125px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.85em;
+            line-height: 1.4;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #333 transparent transparent transparent;
+        }
+
+        select, input[type="number"] {
             width: 100%;
-            padding: 12px 15px;
+            padding: 12px;
             border: 2px solid #e0e0e0;
             border-radius: 8px;
             font-size: 1em;
             transition: all 0.3s ease;
         }
 
-        input[type="number"]:invalid,
-        input[type="number"].out-of-range {
-            border-color: #e74c3c;
-        }
-
-        input[type="number"]:focus,
-        select:focus {
+        select:focus, input[type="number"]:focus {
             outline: none;
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
+        /* Slider Styles */
+        .slider-container {
+            margin-top: 10px;
+        }
+
+        .slider-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .slider {
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 8px;
+            border-radius: 5px;
+            background: #e0e0e0;
+            outline: none;
+            transition: background 0.3s ease;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: transform 0.2s ease;
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .slider-value {
+            min-width: 80px;
+            padding: 5px 10px;
+            background: #f0f0f0;
+            border-radius: 6px;
+            font-weight: 600;
+            color: #667eea;
+            text-align: center;
+            font-size: 0.9em;
+        }
+
+        .range-hint {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 5px;
+        }
+
         .validation-error {
+            display: none;
             color: #e74c3c;
             font-size: 0.85em;
             margin-top: 5px;
-            display: none;
         }
 
         .validation-error.show {
             display: block;
         }
 
-        button {
+        button[type="submit"], .btn-pdf {
             width: 100%;
             padding: 15px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -142,26 +266,29 @@
             font-size: 1.1em;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s ease;
+            transition: all 0.3s ease;
+            margin-top: 10px;
         }
 
-        button:hover {
+        button[type="submit"]:hover, .btn-pdf:hover {
             transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
 
-        button:active {
-            transform: translateY(0);
+        .btn-pdf {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            margin-top: 15px;
         }
 
-        button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
+        .btn-pdf:hover {
+            box-shadow: 0 5px 15px rgba(245, 87, 108, 0.4);
         }
 
         .loading {
             display: none;
             text-align: center;
             padding: 20px;
+            margin-top: 20px;
         }
 
         .loading.show {
@@ -169,8 +296,8 @@
         }
 
         .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
             border-radius: 50%;
             width: 40px;
             height: 40px;
@@ -185,11 +312,10 @@
 
         .result {
             display: none;
-            margin-top: 30px;
-            padding: 25px;
+            margin-top: 20px;
+            padding: 20px;
             background: #f8f9fa;
             border-radius: 10px;
-            border-left: 5px solid #667eea;
         }
 
         .result.show {
@@ -197,27 +323,29 @@
         }
 
         .result h3 {
-            color: #667eea;
+            color: #333;
             margin-bottom: 15px;
-            font-size: 1.3em;
         }
 
         .prediction {
             font-size: 1.5em;
             font-weight: bold;
-            color: #333;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
             margin-bottom: 15px;
+            text-align: center;
         }
 
         .probabilities {
-            display: grid;
+            display: flex;
+            flex-direction: column;
             gap: 10px;
-            margin-bottom: 20px;
         }
 
         .prob-item {
             background: white;
-            padding: 15px;
+            padding: 12px;
             border-radius: 8px;
             display: flex;
             justify-content: space-between;
@@ -241,6 +369,11 @@
             border-radius: 8px;
             margin-top: 20px;
             border-left: 5px solid #c33;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
         }
 
         .info-box {
@@ -252,6 +385,7 @@
         }
 
         .info-box p {
+            margin: 0;
             color: #1976d2;
             font-size: 0.95em;
             line-height: 1.6;
@@ -276,21 +410,37 @@
             .main-content {
                 grid-template-columns: 1fr;
             }
-            
-            .header h1 {
-                font-size: 1.5em;
+
+            .nav-links {
+                flex-wrap: wrap;
+                gap: 5px;
+            }
+
+            .nav-links a {
+                padding: 6px 12px;
+                font-size: 0.9em;
             }
         }
     </style>
 </head>
 <body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">🌍 World Bank AI</div>
+            <div class="nav-links">
+                <a href="/" class="active">Home</a>
+                <a href="/model">Model</a>
+                <a href="/insights">Insights</a>
+                <a href="/about">About</a>
+            </div>
+        </div>
+    </nav>
+
     <div class="container">
         <div class="header">
             <h1>🌍 World Bank Loan Predictor</h1>
             <p>Predict loan cancellation and disbursement outcomes with AI</p>
-            <div class="nav-links">
-                <a href="/analytics">📊 View Analytics</a>
-            </div>
         </div>
 
         <div class="main-content">
@@ -301,7 +451,12 @@
 
                 <form id="predictionForm">
                     <div class="form-group">
-                        <label for="loan_type">Loan Type</label>
+                        <label for="loan_type">
+                            Loan Type
+                            <span class="tooltip-icon">ℹ️
+                                <span class="tooltip-text">The type of loan instrument being used (e.g., SCP USD, CPL, FSL). Different loan types have different structures and terms.</span>
+                            </span>
+                        </label>
                         <select id="loan_type" name="loan_type" required>
                             {% for loan_type in loan_types %}
                             <option value="{{ loan_type }}">{{ loan_type }}</option>
@@ -310,7 +465,12 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="region">Region</label>
+                        <label for="region">
+                            Region
+                            <span class="tooltip-icon">ℹ️
+                                <span class="tooltip-text">The geographical region where the loan is being issued. Regional economic conditions can significantly impact loan outcomes.</span>
+                            </span>
+                        </label>
                         <select id="region" name="region" required>
                             {% for region in regions %}
                             <option value="{{ region }}">{{ region }}</option>
@@ -319,43 +479,73 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="interest_rate">Interest Rate (%)</label>
-                        <input type="number" id="interest_rate" name="interest_rate" step="0.01" min="0" max="30" required>
+                        <label for="interest_rate">
+                            Interest Rate (%)
+                            <span class="tooltip-icon">ℹ️
+                                <span class="tooltip-text">The annual interest rate charged on the loan. Higher rates may indicate higher risk loans.</span>
+                            </span>
+                        </label>
+                        <input type="number" id="interest_rate" name="interest_rate" step="0.01" min="0.01" max="30" value="2.5" required>
+                        <div class="slider-container">
+                            <div class="slider-wrapper">
+                                <input type="range" class="slider" id="interest_rate_slider" min="0.01" max="30" step="0.1" value="2.5">
+                                <span class="slider-value" id="interest_rate_value">2.50%</span>
+                            </div>
+                        </div>
                         <div class="range-hint">Range: 0.00 - 28.25%</div>
                         <div class="validation-error" id="interest_rate_error">⚠️ Out of valid range: 0.00 - 28.25%</div>
                     </div>
 
                     <div class="form-group">
-                        <label for="original_principal_amount">Original Principal Amount (USD)</label>
-                        <input type="number" id="original_principal_amount" name="original_principal_amount" step="1000" min="0" required>
+                        <label for="original_principal_amount">
+                            Original Principal Amount (USD)
+                            <span class="tooltip-icon">ℹ️
+                                <span class="tooltip-text">The total amount of the loan in USD. Larger loans may have different risk profiles.</span>
+                            </span>
+                        </label>
+                        <input type="number" id="original_principal_amount" name="original_principal_amount" step="1000" min="1000" value="50000000" required>
+                        <div class="slider-container">
+                            <div class="slider-wrapper">
+                                <input type="range" class="slider" id="principal_slider" min="0" max="100" step="1" value="50">
+                                <span class="slider-value" id="principal_value">$50.0M</span>
+                            </div>
+                        </div>
                         <div class="range-hint">Range: $0 - $3.75B</div>
                         <div class="validation-error" id="principal_error">⚠️ Out of valid range: $0 - $3.75B</div>
                     </div>
 
                     <div class="form-group">
-                        <label for="borrowers_obligation">Borrower's Obligation (USD)</label>
-                        <input type="number" id="borrowers_obligation" name="borrowers_obligation" step="1000" min="0" required>
-                        <div class="range-hint">Range: $0 - $2.84B</div>
-                        <div class="validation-error" id="obligation_error">⚠️ Out of valid range: $0 - $2.84B</div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="due_to_ibrd">Due to IBRD (USD)</label>
-                        <input type="number" id="due_to_ibrd" name="due_to_ibrd" step="1000" min="0" required>
-                        <div class="range-hint">Range: $0 - $2.92B</div>
-                        <div class="validation-error" id="ibrd_error">⚠️ Out of valid range: $0 - $2.92B</div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="gdp_total">GDP Total (USD)</label>
-                        <input type="number" id="gdp_total" name="gdp_total" step="1000000" min="0" required>
+                        <label for="gdp_total">
+                            GDP Total (USD)
+                            <span class="tooltip-icon">ℹ️
+                                <span class="tooltip-text">The total Gross Domestic Product of the country in USD. This reflects the overall economic size of the country.</span>
+                            </span>
+                        </label>
+                        <input type="number" id="gdp_total" name="gdp_total" step="1000000" min="0" value="5000000000" required>
+                        <div class="slider-container">
+                            <div class="slider-wrapper">
+                                <input type="range" class="slider" id="gdp_total_slider" min="0" max="100" step="1" value="50">
+                                <span class="slider-value" id="gdp_total_value">$5.0B</span>
+                            </div>
+                        </div>
                         <div class="range-hint">Range: $2.6M - $111T</div>
                         <div class="validation-error" id="gdp_total_error">⚠️ Out of valid range: $2.6M - $111T</div>
                     </div>
 
                     <div class="form-group">
-                        <label for="gdp_per_capita">GDP Per Capita (USD)</label>
-                        <input type="number" id="gdp_per_capita" name="gdp_per_capita" step="100" min="0" required>
+                        <label for="gdp_per_capita">
+                            GDP Per Capita (USD)
+                            <span class="tooltip-icon">ℹ️
+                                <span class="tooltip-text">The GDP divided by the population, indicating average economic prosperity. Higher values suggest better repayment capacity.</span>
+                            </span>
+                        </label>
+                        <input type="number" id="gdp_per_capita" name="gdp_per_capita" step="100" min="0" value="5000" required>
+                        <div class="slider-container">
+                            <div class="slider-wrapper">
+                                <input type="range" class="slider" id="gdp_per_capita_slider" min="11.8" max="256580" step="100" value="5000">
+                                <span class="slider-value" id="gdp_per_capita_value">$5,000</span>
+                            </div>
+                        </div>
                         <div class="range-hint">Range: $11.80 - $256,580</div>
                         <div class="validation-error" id="gdp_per_capita_error">⚠️ Out of valid range: $11.80 - $256,580</div>
                     </div>
@@ -372,9 +562,10 @@
                     <h3>Prediction Result</h3>
                     <div class="prediction" id="prediction"></div>
                     <div class="probabilities" id="probabilities"></div>
+                    <button class="btn-pdf" onclick="exportToPDF()">📄 Export to PDF</button>
                 </div>
 
-                <div class="error" id="error" style="display: none;"></div>
+                <div class="error" id="error"></div>
             </div>
 
             <div class="chart-container">
@@ -392,208 +583,476 @@
     </div>
 
     <script>
-        // Initialize charts
-        const ctx1 = document.getElementById('probabilityChart').getContext('2d');
-        const ctx2 = document.getElementById('confidenceChart').getContext('2d');
-        
-        let probabilityChart = new Chart(ctx1, {
-            type: 'bar',
-            data: {
-                labels: [],
-                datasets: [{
-                    label: 'Probability',
-                    data: [],
-                    backgroundColor: ['#2ecc71', '#f39c12', '#e74c3c']
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return (context.parsed.y * 100).toFixed(2) + '%';
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 1,
-                        ticks: {
-                            callback: function(value) {
-                                return (value * 100).toFixed(0) + '%';
-                            }
-                        }
-                    }
-                }
+        let probabilityChart = null;
+        let confidenceChart = null;
+
+        // Format currency
+        function formatCurrency(value) {
+            if (value >= 1e12) return '$' + (value / 1e12).toFixed(1) + 'T';
+            if (value >= 1e9) return '$' + (value / 1e9).toFixed(1) + 'B';
+            if (value >= 1e6) return '$' + (value / 1e6).toFixed(1) + 'M';
+            if (value >= 1e3) return '$' + (value / 1e3).toFixed(1) + 'K';
+            return '$' + value.toFixed(0);
+        }
+
+        // Format number with commas
+        function formatNumber(value) {
+            return '$' + value.toLocaleString('en-US');
+        }
+
+        // Slider synchronization with NaN protection
+        function setupSlider(sliderId, inputId, valueId, formatter, min, max) {
+            const slider = document.getElementById(sliderId);
+            const input = document.getElementById(inputId);
+            const valueDisplay = document.getElementById(valueId);
+
+            if (!slider || !input || !valueDisplay) {
+                console.error(`Missing elements for slider: ${sliderId}`);
+                return;
             }
-        });
 
-        let confidenceChart = new Chart(ctx2, {
-            type: 'doughnut',
-            data: {
-                labels: [],
-                datasets: [{
-                    data: [],
-                    backgroundColor: ['#2ecc71', '#f39c12', '#e74c3c']
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: { position: 'bottom' },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return context.label + ': ' + (context.parsed * 100).toFixed(2) + '%';
-                            }
-                        }
-                    }
-                }
-            }
-        });
-
-        // Validation ranges
-        const ranges = {
-            interest_rate: [0, 28.25],
-            original_principal_amount: [0, 3750000000],
-            borrowers_obligation: [0, 2840000000],
-            due_to_ibrd: [0, 2920000000],
-            gdp_total: [2600000, 111000000000000],
-            gdp_per_capita: [11.80, 256580.52]
-        };
-
-        const errorIds = {
-            interest_rate: 'interest_rate_error',
-            original_principal_amount: 'principal_error',
-            borrowers_obligation: 'obligation_error',
-            due_to_ibrd: 'ibrd_error',
-            gdp_total: 'gdp_total_error',
-            gdp_per_capita: 'gdp_per_capita_error'
-        };
-
-        // Add validation listeners
-        Object.keys(ranges).forEach(field => {
-            const input = document.getElementById(field);
-            const errorDiv = document.getElementById(errorIds[field]);
+            // Ensure min is at least 0.01 to avoid division by zero
+            const safeMin = Math.max(0.01, min);
+            const safeMax = max;
             
-            input.addEventListener('input', function() {
-                const value = parseFloat(this.value);
-                const [min, max] = ranges[field];
-                
-                if (value < min || value > max) {
-                    this.classList.add('out-of-range');
-                    errorDiv.classList.add('show');
-                } else {
-                    this.classList.remove('out-of-range');
-                    errorDiv.classList.remove('show');
+            // Logarithmic scale for large ranges (but not if min is 0 or very small)
+            const isLogScale = min > 0 && max / min > 1000;
+            
+            function updateFromSlider() {
+                let sliderVal = parseFloat(slider.value);
+                if (isNaN(sliderVal)) {
+                    sliderVal = parseFloat(slider.defaultValue || slider.min);
                 }
-            });
-        });
+                
+                let val = sliderVal;
+                if (isLogScale && sliderVal > 0) {
+                    // Use logarithmic interpolation
+                    const logMin = Math.log10(safeMin);
+                    const logMax = Math.log10(safeMax);
+                    const sliderRange = parseFloat(slider.max) - parseFloat(slider.min);
+                    if (sliderRange > 0) {
+                        const logVal = logMin + (logMax - logMin) * (sliderVal - parseFloat(slider.min)) / sliderRange;
+                        val = Math.pow(10, logVal);
+                    }
+                } else {
+                    // Linear interpolation
+                    const sliderRange = parseFloat(slider.max) - parseFloat(slider.min);
+                    if (sliderRange > 0) {
+                        val = safeMin + (safeMax - safeMin) * (sliderVal - parseFloat(slider.min)) / sliderRange;
+                    } else {
+                        val = safeMin;
+                    }
+                }
+                
+                // Ensure val is valid
+                if (isNaN(val) || !isFinite(val)) {
+                    val = safeMin;
+                }
+                
+                val = Math.max(safeMin, Math.min(safeMax, val));
+                input.value = Math.round(val * 100) / 100; // Round to 2 decimals
+                valueDisplay.textContent = formatter(val);
+            }
 
+            function updateFromInput() {
+                let val = parseFloat(input.value);
+                if (isNaN(val) || !isFinite(val)) {
+                    val = safeMin;
+                    input.value = safeMin;
+                }
+                
+                val = Math.max(safeMin, Math.min(safeMax, val));
+                
+                if (isLogScale && val > 0) {
+                    const logMin = Math.log10(safeMin);
+                    const logMax = Math.log10(safeMax);
+                    const logVal = Math.log10(val);
+                    const sliderRange = parseFloat(slider.max) - parseFloat(slider.min);
+                    if (sliderRange > 0 && (logMax - logMin) > 0) {
+                        const sliderVal = parseFloat(slider.min) + sliderRange * (logVal - logMin) / (logMax - logMin);
+                        slider.value = Math.max(parseFloat(slider.min), Math.min(parseFloat(slider.max), sliderVal));
+                    }
+                } else {
+                    const sliderRange = parseFloat(slider.max) - parseFloat(slider.min);
+                    if (sliderRange > 0) {
+                        const sliderVal = parseFloat(slider.min) + sliderRange * (val - safeMin) / (safeMax - safeMin);
+                        slider.value = Math.max(parseFloat(slider.min), Math.min(parseFloat(slider.max), sliderVal));
+                    }
+                }
+                valueDisplay.textContent = formatter(val);
+            }
+
+            slider.addEventListener('input', updateFromSlider);
+            input.addEventListener('input', updateFromInput);
+            input.addEventListener('blur', updateFromInput); // Update on blur too
+            updateFromSlider();
+        }
+
+        // Setup all sliders with proper ranges and NaN protection
+        // Interest rate: 0.01 to 30 (avoid division by zero)
+        setupSlider('interest_rate_slider', 'interest_rate', 'interest_rate_value', 
+            (v) => {
+                if (isNaN(v) || !isFinite(v)) return '0.00%';
+                return v.toFixed(2) + '%';
+            }, 0.01, 30);
+        
+        // Principal amount: 1000 to 3.75B (use 0-100 range for better UX)
+        const principalSlider = document.getElementById('principal_slider');
+        const principalInput = document.getElementById('original_principal_amount');
+        const principalValue = document.getElementById('principal_value');
+        
+        if (principalSlider && principalInput && principalValue) {
+            const principalMin = 1000;
+            const principalMax = 3750000000;
+            principalSlider.min = 0;
+            principalSlider.max = 100;
+            
+            function updatePrincipalFromSlider() {
+                let sliderVal = parseFloat(principalSlider.value);
+                if (isNaN(sliderVal) || !isFinite(sliderVal)) {
+                    sliderVal = 50;
+                    principalSlider.value = sliderVal;
+                }
+                
+                const sliderPercent = sliderVal / 100;
+                let val = principalMin + (principalMax - principalMin) * sliderPercent;
+                
+                if (isNaN(val) || !isFinite(val)) {
+                    val = principalMin;
+                }
+                
+                val = Math.max(principalMin, Math.min(principalMax, val));
+                principalInput.value = Math.round(val);
+                principalValue.textContent = formatCurrency(val);
+            }
+            
+            function updatePrincipalFromInput() {
+                let val = parseFloat(principalInput.value);
+                if (isNaN(val) || !isFinite(val)) {
+                    val = principalMin;
+                    principalInput.value = val;
+                }
+                
+                val = Math.max(principalMin, Math.min(principalMax, val));
+                
+                const sliderPercent = (val - principalMin) / (principalMax - principalMin);
+                let sliderVal = sliderPercent * 100;
+                
+                if (isNaN(sliderVal) || !isFinite(sliderVal)) {
+                    sliderVal = 50;
+                }
+                
+                sliderVal = Math.max(0, Math.min(100, sliderVal));
+                principalSlider.value = sliderVal;
+                principalValue.textContent = formatCurrency(val);
+            }
+            
+            principalSlider.addEventListener('input', updatePrincipalFromSlider);
+            principalInput.addEventListener('input', updatePrincipalFromInput);
+            principalInput.addEventListener('blur', updatePrincipalFromInput);
+            updatePrincipalFromSlider();
+        }
+        
+        // GDP Total: 2.6M to 111T (logarithmic scale needed)
+        const gdpTotalSlider = document.getElementById('gdp_total_slider');
+        const gdpTotalInput = document.getElementById('gdp_total');
+        const gdpTotalValue = document.getElementById('gdp_total_value');
+        
+        if (gdpTotalSlider && gdpTotalInput && gdpTotalValue) {
+            const gdpMin = 2600000;
+            const gdpMax = 111000000000000;
+            gdpTotalSlider.min = 0;
+            gdpTotalSlider.max = 100;
+            
+            function updateGDPTotalFromSlider() {
+                let sliderVal = parseFloat(gdpTotalSlider.value);
+                if (isNaN(sliderVal) || !isFinite(sliderVal)) {
+                    sliderVal = 50; // Default to middle
+                    gdpTotalSlider.value = sliderVal;
+                }
+                
+                const sliderPercent = sliderVal / 100;
+                const logMin = Math.log10(gdpMin);
+                const logMax = Math.log10(gdpMax);
+                const logVal = logMin + (logMax - logMin) * sliderPercent;
+                let val = Math.pow(10, logVal);
+                
+                if (isNaN(val) || !isFinite(val)) {
+                    val = gdpMin;
+                }
+                
+                val = Math.max(gdpMin, Math.min(gdpMax, val));
+                gdpTotalInput.value = Math.round(val);
+                gdpTotalValue.textContent = formatCurrency(val);
+            }
+            
+            function updateGDPTotalFromInput() {
+                let val = parseFloat(gdpTotalInput.value);
+                if (isNaN(val) || !isFinite(val)) {
+                    val = gdpMin;
+                    gdpTotalInput.value = val;
+                }
+                
+                val = Math.max(gdpMin, Math.min(gdpMax, val));
+                
+                const logMin = Math.log10(gdpMin);
+                const logMax = Math.log10(gdpMax);
+                const logVal = Math.log10(val);
+                const sliderPercent = (logVal - logMin) / (logMax - logMin);
+                let sliderVal = sliderPercent * 100;
+                
+                if (isNaN(sliderVal) || !isFinite(sliderVal)) {
+                    sliderVal = 50;
+                }
+                
+                sliderVal = Math.max(0, Math.min(100, sliderVal));
+                gdpTotalSlider.value = sliderVal;
+                gdpTotalValue.textContent = formatCurrency(val);
+            }
+            
+            gdpTotalSlider.addEventListener('input', updateGDPTotalFromSlider);
+            gdpTotalInput.addEventListener('input', updateGDPTotalFromInput);
+            gdpTotalInput.addEventListener('blur', updateGDPTotalFromInput);
+            updateGDPTotalFromSlider();
+        }
+        
+        // GDP Per Capita: 11.8 to 256580 (linear scale)
+        setupSlider('gdp_per_capita_slider', 'gdp_per_capita', 'gdp_per_capita_value', 
+            (v) => {
+                if (isNaN(v) || !isFinite(v)) return '$0';
+                return formatNumber(v);
+            }, 11.8, 256580);
+
+        // Form submission
         document.getElementById('predictionForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            // Check for validation errors
-            const hasErrors = Array.from(document.getElementsByClassName('validation-error')).some(el => 
-                el.classList.contains('show')
-            );
+            // Get and validate all inputs
+            const interestRate = parseFloat(document.getElementById('interest_rate').value);
+            const principalAmount = parseFloat(document.getElementById('original_principal_amount').value);
+            const gdpTotal = parseFloat(document.getElementById('gdp_total').value);
+            const gdpPerCapita = parseFloat(document.getElementById('gdp_per_capita').value);
             
-            if (hasErrors) {
-                document.getElementById('error').textContent = 'Please fix validation errors before submitting.';
-                document.getElementById('error').style.display = 'block';
+            // Validate no NaN values
+            if (isNaN(interestRate) || isNaN(principalAmount) || isNaN(gdpTotal) || isNaN(gdpPerCapita)) {
+                document.getElementById('error').textContent = 'Error: Please ensure all numerical fields have valid values';
+                document.getElementById('error').classList.add('show');
                 return;
             }
             
-            // Hide previous results
-            document.getElementById('result').classList.remove('show');
-            document.getElementById('error').style.display = 'none';
-            
-            // Show loading
-            document.getElementById('loading').classList.add('show');
-            
-            // Collect form data
             const formData = {
                 loan_type: document.getElementById('loan_type').value,
                 region: document.getElementById('region').value,
-                interest_rate: parseFloat(document.getElementById('interest_rate').value),
-                original_principal_amount: parseFloat(document.getElementById('original_principal_amount').value),
-                borrowers_obligation: parseFloat(document.getElementById('borrowers_obligation').value),
-                due_to_ibrd: parseFloat(document.getElementById('due_to_ibrd').value),
-                gdp_total: parseFloat(document.getElementById('gdp_total').value),
-                gdp_per_capita: parseFloat(document.getElementById('gdp_per_capita').value)
+                interest_rate: interestRate,
+                original_principal_amount: principalAmount,
+                gdp_total: gdpTotal,
+                gdp_per_capita: gdpPerCapita
             };
-            
+
+            // Show loading
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('result').classList.remove('show');
+            document.getElementById('error').classList.remove('show');
+
             try {
                 const response = await fetch('/predict', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(formData)
                 });
-                
+
                 const data = await response.json();
-                
-                // Hide loading
-                document.getElementById('loading').classList.remove('show');
-                
-                if (response.ok) {
-                    // Display results
-                    const emojiMap = {
-                        'Fully Disbursed': '✅',
-                        'Major Cancellation': '⚠️',
-                        'Minor Cancellation': '🔍'
-                    };
-                    
-                    document.getElementById('prediction').textContent = 
-                        `${emojiMap[data.prediction] || '📊'} ${data.prediction}`;
-                    
-                    const probContainer = document.getElementById('probabilities');
-                    probContainer.innerHTML = '';
-                    
-                    const labels = [];
-                    const values = [];
-                    
-                    Object.entries(data.probabilities).forEach(([label, value]) => {
-                        const probItem = document.createElement('div');
-                        probItem.className = 'prob-item';
-                        probItem.innerHTML = `
-                            <span class="prob-label">${label}</span>
-                            <span class="prob-value">${(value * 100).toFixed(2)}%</span>
-                        `;
-                        probContainer.appendChild(probItem);
-                        
-                        labels.push(label);
-                        values.push(value);
-                    });
-                    
-                    // Update charts
-                    probabilityChart.data.labels = labels;
-                    probabilityChart.data.datasets[0].data = values;
-                    probabilityChart.update();
-                    
-                    confidenceChart.data.labels = labels;
-                    confidenceChart.data.datasets[0].data = values;
-                    confidenceChart.update();
-                    
-                    document.getElementById('result').classList.add('show');
-                } else {
-                    // Display error
-                    document.getElementById('error').textContent = data.error || 'An error occurred';
-                    document.getElementById('error').style.display = 'block';
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Prediction failed');
                 }
+
+                // Display results
+                document.getElementById('prediction').innerHTML = 
+                    `🎯 ${data.prediction}`;
+                
+                const probHtml = Object.entries(data.probabilities)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([label, prob]) => `
+                        <div class="prob-item">
+                            <span class="prob-label">${label}</span>
+                            <span class="prob-value">${(prob * 100).toFixed(2)}%</span>
+                        </div>
+                    `).join('');
+                
+                document.getElementById('probabilities').innerHTML = probHtml;
+                document.getElementById('result').classList.add('show');
+
+                // Update charts
+                updateCharts(data.probabilities);
+
             } catch (error) {
+                document.getElementById('error').textContent = `Error: ${error.message}`;
+                document.getElementById('error').classList.add('show');
+            } finally {
                 document.getElementById('loading').classList.remove('show');
-                document.getElementById('error').textContent = 'Network error. Please try again.';
-                document.getElementById('error').style.display = 'block';
             }
         });
+
+        // Update charts
+        function updateCharts(probabilities) {
+            const labels = Object.keys(probabilities);
+            const values = Object.values(probabilities).map(v => v * 100);
+
+            // Probability Chart
+            const ctx1 = document.getElementById('probabilityChart').getContext('2d');
+            if (probabilityChart) probabilityChart.destroy();
+            probabilityChart = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Probability (%)',
+                        data: values,
+                        backgroundColor: ['#2ecc71', '#f39c12', '#e74c3c']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: {
+                        y: { beginAtZero: true, max: 100 }
+                    }
+                }
+            });
+
+            // Confidence Chart
+            const ctx2 = document.getElementById('confidenceChart').getContext('2d');
+            if (confidenceChart) confidenceChart.destroy();
+            confidenceChart = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: ['#2ecc71', '#f39c12', '#e74c3c']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true
+                }
+            });
+        }
+
+        // PDF Export with error handling
+        function exportToPDF() {
+            try {
+                // Check if jsPDF is available
+                if (typeof window.jspdf === 'undefined') {
+                    alert('PDF library not loaded. Please refresh the page and try again.');
+                    return;
+                }
+
+                // Check if results are available
+                const resultDiv = document.getElementById('result');
+                if (!resultDiv || !resultDiv.classList.contains('show')) {
+                    alert('Please generate a prediction first before exporting to PDF.');
+                    return;
+                }
+
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // Add title
+                doc.setFontSize(20);
+                doc.text('World Bank Loan Prediction Report', 20, 20);
+                
+                // Add prediction
+                doc.setFontSize(16);
+                const predictionEl = document.getElementById('prediction');
+                const prediction = predictionEl ? predictionEl.textContent.trim() : 'N/A';
+                doc.text('Prediction:', 20, 40);
+                doc.setFontSize(14);
+                // Handle long text that might exceed page width
+                const predictionLines = doc.splitTextToSize(prediction, 170);
+                doc.text(predictionLines, 20, 50);
+                let yPos = 50 + (predictionLines.length * 7);
+                
+                // Add probabilities
+                doc.setFontSize(16);
+                doc.text('Probabilities:', 20, yPos + 10);
+                doc.setFontSize(12);
+                yPos += 20;
+                const probItems = document.querySelectorAll('.prob-item');
+                if (probItems.length > 0) {
+                    probItems.forEach(item => {
+                        const labelEl = item.querySelector('.prob-label');
+                        const valueEl = item.querySelector('.prob-value');
+                        if (labelEl && valueEl) {
+                            const label = labelEl.textContent.trim();
+                            const value = valueEl.textContent.trim();
+                            doc.text(`${label}: ${value}`, 20, yPos);
+                            yPos += 10;
+                            if (yPos > 280) {
+                                doc.addPage();
+                                yPos = 20;
+                            }
+                        }
+                    });
+                } else {
+                    doc.text('No probabilities available', 20, yPos);
+                    yPos += 10;
+                }
+
+                // Add form data
+                doc.setFontSize(16);
+                doc.text('Input Parameters:', 20, yPos + 10);
+                doc.setFontSize(12);
+                yPos += 20;
+                
+                try {
+                    const interestRate = parseFloat(document.getElementById('interest_rate').value) || 0;
+                    const principalAmount = parseFloat(document.getElementById('original_principal_amount').value) || 0;
+                    const gdpTotal = parseFloat(document.getElementById('gdp_total').value) || 0;
+                    const gdpPerCapita = parseFloat(document.getElementById('gdp_per_capita').value) || 0;
+                    
+                    const formData = {
+                        'Loan Type': document.getElementById('loan_type').value || 'N/A',
+                        'Region': document.getElementById('region').value || 'N/A',
+                        'Interest Rate': interestRate.toFixed(2) + '%',
+                        'Principal Amount': formatCurrency(principalAmount),
+                        'GDP Total': formatCurrency(gdpTotal),
+                        'GDP Per Capita': formatNumber(gdpPerCapita)
+                    };
+                    
+                    Object.entries(formData).forEach(([key, value]) => {
+                        const text = `${key}: ${value}`;
+                        const lines = doc.splitTextToSize(text, 170);
+                        doc.text(lines, 20, yPos);
+                        yPos += lines.length * 7;
+                        if (yPos > 280) {
+                            doc.addPage();
+                            yPos = 20;
+                        }
+                    });
+                } catch (err) {
+                    console.error('Error processing form data:', err);
+                    doc.text('Error: Could not retrieve form data', 20, yPos);
+                    yPos += 10;
+                }
+
+                // Add timestamp
+                doc.setFontSize(10);
+                const timestamp = new Date().toLocaleString();
+                if (yPos > 270) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                doc.text(`Generated on: ${timestamp}`, 20, Math.min(280, yPos + 10));
+                
+                // Save the PDF
+                doc.save('loan_prediction_report.pdf');
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                alert('An error occurred while generating the PDF. Please try again.');
+            }
+        }
     </script>
 </body>
 </html>

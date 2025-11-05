@@ -205,6 +205,24 @@ def analytics():
     return render_template('analytics.html')
 
 
+@app.route('/model')
+def model():
+    """Render the model information page"""
+    return render_template('model.html')
+
+
+@app.route('/insights')
+def insights():
+    """Render the insights page"""
+    return render_template('insights.html')
+
+
+@app.route('/about')
+def about():
+    """Render the about page"""
+    return render_template('about.html')
+
+
 @app.route('/predict', methods=['POST'])
 def predict():
     """Handle prediction requests"""
@@ -215,13 +233,12 @@ def predict():
         # Get form data
         data = request.json
         
-        # Validate required fields
-        required_fields = cat_cols + num_cols
-        for field in required_fields:
-            # Handle log-prefixed columns
-            original_field = field.replace('log_', '')
-            if original_field not in data:
-                return jsonify({'error': f'Missing required field: {original_field}'}), 400
+        # Validate required fields (user provides non-log versions)
+        required_fields_user = ['loan_type', 'region', 'interest_rate', 
+                               'original_principal_amount', 'gdp_total', 'gdp_per_capita']
+        for field in required_fields_user:
+            if field not in data:
+                return jsonify({'error': f'Missing required field: {field}'}), 400
         
         # Preprocess input
         x_cat, x_num = preprocess_input(data)
