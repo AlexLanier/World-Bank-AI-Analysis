@@ -1,0 +1,26 @@
+World Bank Loan Prediction Dashboard - Information
+
+The World Bank Loan Prediction Dashboard is an AI-powered tool that helps predict loan outcomes based on various financial and economic indicators.
+
+Key Features:
+- Loan outcome prediction using TabTransformer deep learning model
+- Supports three prediction classes: Fully Disbursed, Minor Cancellation, Major Cancellation
+- Uses features including loan type, region, interest rate, principal amount, GDP metrics
+
+Model Architecture:
+- TabTransformer: A transformer-based model designed for tabular data
+- Combines categorical embeddings with numerical feature projections
+- Achieves approximately 87% accuracy on test data
+
+Input Features:
+- Categorical: Loan Type, Region
+- Numerical: Interest Rate, Original Principal Amount, GDP Total, GDP Per Capita
+
+Loan Types:
+- SCP USD, SCPD, Pool Loan, CPL, FSL, and others
+
+Regions:
+- East Asia and Pacific, Latin America, Africa, Europe, South Asia, Middle East, and others
+
+The model uses log transformations for numerical features with large ranges to handle skewed distributions.
+

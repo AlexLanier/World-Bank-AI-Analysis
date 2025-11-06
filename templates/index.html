@@ -7,6 +7,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
     <style>
         * {
             margin: 0;
@@ -562,7 +564,16 @@
                     <h3>Prediction Result</h3>
                     <div class="prediction" id="prediction"></div>
                     <div class="probabilities" id="probabilities"></div>
-                    <button class="btn-pdf" onclick="exportToPDF()">📄 Export to PDF</button>
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button class="btn-pdf" onclick="exportToPDF()">📄 Export to PDF</button>
+                        <button class="btn-pdf" onclick="requestExplanation()" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                            🔍 Explain Prediction
+                        </button>
+                    </div>
+                    <div id="explanation" class="explanation-section" style="display: none; margin-top: 20px;">
+                        <h4>Feature Importance</h4>
+                        <ul id="explanationList" class="feature-importance-list"></ul>
+                    </div>
                 </div>
 
                 <div class="error" id="error"></div>
@@ -840,14 +851,18 @@
                 return;
             }
             
-            const formData = {
+                const formData = {
                 loan_type: document.getElementById('loan_type').value,
                 region: document.getElementById('region').value,
                 interest_rate: interestRate,
                 original_principal_amount: principalAmount,
                 gdp_total: gdpTotal,
-                gdp_per_capita: gdpPerCapita
+                gdp_per_capita: gdpPerCapita,
+                include_explanation: false  // Request explanation separately
             };
+            
+            // Store form data for explanation requests
+            window.lastPredictionData = formData;
 
             // Show loading
             document.getElementById('loading').classList.add('show');
@@ -868,8 +883,10 @@
                 }
 
                 // Display results
+                const confidenceScore = data.confidence_score ? 
+                    ` (Confidence: ${(data.confidence_score * 100).toFixed(1)}%)` : '';
                 document.getElementById('prediction').innerHTML = 
-                    `🎯 ${data.prediction}`;
+                    `🎯 ${data.prediction}${confidenceScore}`;
                 
                 const probHtml = Object.entries(data.probabilities)
                     .sort((a, b) => b[1] - a[1])
@@ -882,6 +899,9 @@
                 
                 document.getElementById('probabilities').innerHTML = probHtml;
                 document.getElementById('result').classList.add('show');
+                
+                // Store prediction data for explanation
+                window.lastPredictionResult = data;
 
                 // Update charts
                 updateCharts(data.probabilities);
@@ -1053,6 +1073,49 @@
                 alert('An error occurred while generating the PDF. Please try again.');
             }
         }
+        
+        // Request explanation for the last prediction
+        async function requestExplanation() {
+            if (!window.lastPredictionData) {
+                alert('Please make a prediction first.');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/explain', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(window.lastPredictionData)
+                });
+                
+                const explanation = await response.json();
+                
+                if (explanation.success) {
+                    const explanationDiv = document.getElementById('explanation');
+                    const explanationList = document.getElementById('explanationList');
+                    
+                    explanationList.innerHTML = explanation.top_features.map(feat => `
+                        <li>
+                            <div>
+                                <strong>${feat.feature}</strong>
+                                <span>${(feat.importance * 100).toFixed(2)}%</span>
+                            </div>
+                            <div class="feature-importance-bar" style="width: ${feat.importance * 100}%"></div>
+                        </li>
+                    `).join('');
+                    
+                    explanationDiv.style.display = 'block';
+                } else {
+                    alert('Error: ' + (explanation.error || 'Could not generate explanation'));
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
     </script>
+    <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+    
+    <!-- Chat Panel -->
+    <div id="chatBot"></div>
 </body>
 </html>

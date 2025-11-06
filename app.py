@@ -6,6 +6,15 @@ from flask import Flask, render_template, request, jsonify, send_from_directory
 import pickle
 import os
 
+# Load environment variables from .env file
+from dotenv import load_dotenv
+load_dotenv()
+
+# Import new modules
+from chat import chat_with_llm, detect_query_type, format_conversation_history
+from rag_engine import query_rag, index_folder
+from explain import explain_prediction, format_explanation_for_llm, initialize_explainer
+
 app = Flask(__name__)
 
 # Global variables
@@ -86,8 +95,8 @@ def load_model():
     """Load the trained model and artifacts"""
     global model, device, scaler, cat_vocab, class_names, cat_cols, num_cols, model_hparams
     
-    model_file = 'tabtransformer_model.pt'
-    artifacts_file = 'tabtransformer_artifacts.pkl'
+    model_file = 'models/tabtransformer_model.pt'
+    artifacts_file = 'models/tabtransformer_artifacts.pkl'
     
     if not os.path.exists(model_file):
         print("⚠️  Model file not found. Please train the model first.")
@@ -139,6 +148,14 @@ def load_model():
         print(f"   - Classes: {class_names}")
         print(f"   - Categorical features: {cat_cols}")
         print(f"   - Numerical features: {num_cols}")
+        
+        # Initialize explainer (would need background data for full SHAP)
+        # For now, just store the model reference
+        try:
+            initialize_explainer(model, None, cat_cols, num_cols)
+        except Exception as e:
+            print(f"⚠️  Could not initialize explainer: {e}")
+        
         return True
         
     except Exception as e:
@@ -225,13 +242,16 @@ def about():
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    """Handle prediction requests"""
+    """Handle prediction requests with optional explanations"""
     try:
         if model is None:
             return jsonify({'error': 'Model not loaded'}), 500
         
         # Get form data
         data = request.json
+        
+        # Check if explanation is requested
+        include_explanation = request.json.get('include_explanation', False)
         
         # Validate required fields (user provides non-log versions)
         required_fields_user = ['loan_type', 'region', 'interest_rate', 
@@ -254,14 +274,145 @@ def predict():
         # Format results
         predicted_class = class_names[predicted_class_idx]
         prob_dict = {class_names[i]: float(prob) for i, prob in enumerate(probabilities)}
+        confidence_score = float(probabilities[predicted_class_idx])
         
-        return jsonify({
+        response = {
             'prediction': predicted_class,
-            'probabilities': prob_dict
-        })
+            'probabilities': prob_dict,
+            'confidence_score': confidence_score
+        }
+        
+        # Add explanation if requested
+        if include_explanation:
+            try:
+                explanation = explain_prediction(
+                    model=model,
+                    input_data=data,
+                    cat_cols=cat_cols,
+                    num_cols=num_cols,
+                    scaler=scaler,
+                    cat_vocab=cat_vocab,
+                    preprocess_input_func=preprocess_input
+                )
+                response['explanation'] = explanation
+            except Exception as e:
+                response['explanation_error'] = str(e)
+        
+        return jsonify(response)
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/chat', methods=['POST'])
+def chat():
+    """Handle chat requests with LLM"""
+    try:
+        data = request.json
+        user_message = data.get('message', '')
+        conversation_history = data.get('history', [])
+        query_type = data.get('query_type', 'auto')  # 'general', 'rag', 'explain', 'auto'
+        
+        if not user_message:
+            return jsonify({'error': 'Message is required'}), 400
+        
+        # Auto-detect query type if not specified
+        if query_type == 'auto':
+            query_type = detect_query_type(user_message)
+        
+        # Get RAG context if needed
+        rag_context = None
+        if query_type in ['rag', 'auto']:
+            rag_result = query_rag(user_message, n_results=3)
+            if rag_result.get('success') and rag_result.get('context'):
+                rag_context = rag_result['context']
+        
+        # Get explanation context if needed
+        explanation_context = None
+        if query_type == 'explain':
+            # If there's a prediction in the conversation, use it
+            # For now, we'll just respond with general explanation info
+            explanation_context = "Model explanation context would be included here for explain queries."
+        
+        # Format conversation history
+        formatted_history = format_conversation_history(conversation_history)
+        
+        # Get LLM response
+        response = chat_with_llm(
+            user_message=user_message,
+            conversation_history=formatted_history,
+            use_rag_context=rag_context,
+            use_explanation_context=explanation_context
+        )
+        
+        return jsonify({
+            'response': response.get('response', 'Sorry, I could not generate a response.'),
+            'success': response.get('success', False),
+            'query_type': query_type,
+            'model_used': response.get('model_used')
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'error': str(e),
+            'success': False
+        }), 500
+
+
+@app.route('/rag-query', methods=['POST'])
+def rag_query():
+    """Handle RAG-only queries"""
+    try:
+        data = request.json
+        query = data.get('query', '')
+        
+        if not query:
+            return jsonify({'error': 'Query is required'}), 400
+        
+        result = query_rag(query, n_results=5)
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({
+            'error': str(e),
+            'success': False
+        }), 500
+
+
+@app.route('/explain', methods=['POST'])
+def explain():
+    """Handle model explanation requests"""
+    try:
+        if model is None:
+            return jsonify({'error': 'Model not loaded'}), 500
+        
+        data = request.json
+        
+        # Validate required fields
+        required_fields_user = ['loan_type', 'region', 'interest_rate', 
+                               'original_principal_amount', 'gdp_total', 'gdp_per_capita']
+        for field in required_fields_user:
+            if field not in data:
+                return jsonify({'error': f'Missing required field: {field}'}), 400
+        
+        explanation = explain_prediction(
+            model=model,
+            input_data=data,
+            cat_cols=cat_cols,
+            num_cols=num_cols,
+            scaler=scaler,
+            cat_vocab=cat_vocab,
+            preprocess_input_func=preprocess_input
+        )
+        
+        return jsonify(explanation)
+        
+    except Exception as e:
+        return jsonify({
+            'error': str(e),
+            'success': False
+        }), 500
 
 
 @app.route('/health')
@@ -275,6 +426,12 @@ def health():
 
 if __name__ == '__main__':
     print("🚀 Starting Flask app...")
+    
+    # Index RAG files on startup
+    print("📚 Indexing RAG files...")
+    rag_result = index_folder("./rag_files")
+    print(f"   - Indexed {rag_result.get('files_indexed', 0)} files")
+    
     if load_model():
         print("✅ Ready to serve predictions!")
     else:

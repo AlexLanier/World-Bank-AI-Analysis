@@ -1,0 +1,119 @@
+/* Main layout improvements */
+body {
+    margin-right: 400px; /* Make room for chat panel */
+    transition: margin-right 0.3s ease;
+}
+
+body.chat-collapsed {
+    margin-right: 60px;
+}
+
+@media (max-width: 1024px) {
+    body {
+        margin-right: 0;
+    }
+}
+
+/* Form improvements */
+input[type="number"],
+input[type="text"],
+select {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1em;
+    transition: all 0.3s ease;
+    background: white;
+    font-family: inherit;
+}
+
+input[type="number"]:focus,
+input[type="text"]:focus,
+select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+input[type="number"]:hover,
+input[type="text"]:hover,
+select:hover {
+    border-color: #b0b0b0;
+}
+
+/* Button improvements */
+button[type="submit"],
+.btn-pdf {
+    padding: 15px 30px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+button[type="submit"]:hover,
+.btn-pdf:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+button[type="submit"]:active,
+.btn-pdf:active {
+    transform: translateY(0);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+    body {
+        margin-right: 0;
+    }
+    
+    #chatBot {
+        width: 100%;
+        height: 50vh;
+        bottom: 0;
+        top: auto;
+        right: 0;
+    }
+}
+
+/* Explanation section styling */
+.explanation-section {
+    margin-top: 20px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border-left: 4px solid #667eea;
+}
+
+.explanation-section h4 {
+    margin-top: 0;
+    color: #667eea;
+}
+
+.feature-importance-list {
+    list-style: none;
+    padding: 0;
+}
+
+.feature-importance-list li {
+    padding: 10px;
+    margin: 5px 0;
+    background: white;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.feature-importance-bar {
+    height: 8px;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    border-radius: 4px;
+    margin-top: 5px;
+}
+

@@ -3,4 +3,8 @@ pandas
 numpy
 torch
 scikit-learn
+groq
+chromadb
+sentence-transformers
+python-dotenv
 

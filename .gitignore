@@ -27,18 +27,21 @@ wheels/
 instance/
 .webassets-cache
 
-# Model files
-*.cbm
-*.pkl
-*.joblib
-*.pt
+# Model files (in models/ directory)
+# Note: Keep model files for deployment, but ignore large checkpoints
+models/*.cbm
+models/*.joblib
+models/checkpoint*
 
-# Data files
-*.parquet
-*.csv
-*.json
-*.db
-*.sqlite
+# Data files (in data/ directory)
+# Note: Data files are large, ignore them in git
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# ChromaDB
+chroma_db/
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -56,6 +59,12 @@ Thumbs.db
 # Logs
 *.log
 
-# Environment
+# Environment variables and secrets
 .env
 .env.local
+.env.*.local
+*.env
+**/secrets/*
+**/config/private/*
+*.key
+*.pem
